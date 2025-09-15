@@ -320,7 +320,7 @@ public class GameManager : MonoBehaviour
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
 #else
-            SaveGame()
+            SaveGame();
             Application.Quit();
 #endif
     }
