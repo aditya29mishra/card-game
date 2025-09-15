@@ -19,7 +19,20 @@ public class GameManager : MonoBehaviour
     // Define the spacing between cards
     public Vector2 spacing = new Vector2(10f, 10f);
         private Card[] cards;
+    public static GameManager Instance;
 
+    private void Awake() {
+        if (Instance == null) {
+            Instance = this;
+        } else {
+            Destroy(gameObject);
+        }
+    }
+    public void OnCardClicked(Card card)
+    {
+        Debug.Log("Card with pair ID " + card.pairID + " was clicked!");
+
+    }
     private void Start()
     {
         StartNewGame();

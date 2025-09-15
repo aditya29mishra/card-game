@@ -10,11 +10,33 @@ public class Card : MonoBehaviour
     public bool isFlipped = false;
     private bool isAnimating = false;
 
+    // Use Awake to set up the button listener
+    private void Awake()
+    {
+        Button button = GetComponent<Button>();
+        if (button != null)
+        {
+            button.onClick.AddListener(OnCardClick);
+        }
+    }
+
     public void SetCard(int id, Sprite frontSprite, Sprite backSprite)
     {
         pairID = id;
         cardFront.sprite = frontSprite;
         cardBack.sprite = backSprite;
+        // Initially, only show the back of the card
+        cardFront.gameObject.SetActive(false);
+        cardBack.gameObject.SetActive(true);
+        isFlipped = false;
+    }
+
+    public void OnCardClick() {
+        if (!isFlipped && !isAnimating) {
+            Flip();
+            // Tell the GameManager this card was clicked
+            GameManager.Instance.OnCardClicked(this);
+        }
     }
 
     public void Flip()
