@@ -125,9 +125,11 @@ public class GameManager : MonoBehaviour
 
         flippedUnmatched.Add(card);
 
-        // If two cards are now flipped, compare them
         if (flippedUnmatched.Count >= 2)
         {
+            // Disable all card buttons to prevent more flips
+            SetCardsInteractable(false);
+
             Card a = flippedUnmatched[0];
             Card b = flippedUnmatched[1];
 
@@ -137,6 +139,7 @@ public class GameManager : MonoBehaviour
                 a.IsMatched = true;
                 b.IsMatched = true;
                 flippedUnmatched.Clear();
+                SetCardsInteractable(true); // Re-enable buttons immediately for a match
                 Debug.Log("Match found!");
             }
             else
@@ -150,13 +153,35 @@ public class GameManager : MonoBehaviour
     private IEnumerator FlipBackAfterDelay(Card a, Card b, float delay)
     {
         yield return new WaitForSeconds(delay);
-        // Ensure they are still unmatched before flipping back
+        
+        // Flip them back if they're still not matched
         if (!a.IsMatched) a.Flip();
         if (!b.IsMatched) b.Flip();
-
+        
         flippedUnmatched.Clear();
+        SetCardsInteractable(true); // Re-enable buttons after the flip-back animation
     }
 
+    // Helper method to enable/disable all card buttons
+    private void SetCardsInteractable(bool interactable)
+    {
+        foreach (var card in cards)
+        {
+            if (card != null)
+            {
+                Button button = card.GetComponent<Button>();
+                if (button != null)
+                {
+                    // Only change the state if the card is not already matched
+                    if (!card.IsMatched)
+                    {
+                        button.interactable = interactable;
+                    }
+                }
+            }
+        }
+    }
+    
     private void ShuffleList<T>(List<T> list)
     {
         for (int i = list.Count - 1; i > 0; i--)
