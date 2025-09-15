@@ -6,9 +6,9 @@ using TMPro;
 
 public class GameManager : MonoBehaviour
 {
+    public static GameManager Instance;
     public AudioSource audioSource;
     public AudioClip sFlip, sMatch, sMismatch, sGameOver;
-    public static GameManager Instance;
     [System.Serializable]
     public struct GridConfig
     {
@@ -24,6 +24,8 @@ public class GameManager : MonoBehaviour
     public Transform gridContainer;
     public TextMeshProUGUI scoreText;
     public TextMeshProUGUI streakText;
+    public GameObject WinGameObject;
+    public Button continueButton; // Reference to the Continue button
 
     [Header("Grid Settings")]
     public List<GridConfig> gridConfigurations;
@@ -34,13 +36,16 @@ public class GameManager : MonoBehaviour
 
     [Header("Game Logic")]
     public float mismatchDelay = 0.6f;
+    public float initialRevealDuration = 2.0f;
 
     private Card[] cards;
     private List<Card> flippedUnmatched = new List<Card>();
     private int score = 0;
     private int streak = 0;
-    public float initialRevealDuration = 2.0f;
-    public GameObject WinGameObject;
+
+    public GameObject gameOpenPanel;
+    public GameObject playGamePanel;
+    public GameObject PauseMenuPanel;
 
     private void Awake()
     {
@@ -52,16 +57,42 @@ public class GameManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
+
+        // At awake, check if a save exists and enable the continue button
+        if (continueButton != null)
+        {
+            continueButton.interactable = PlayerPrefs.HasKey("CardMatch_Save");
+        }
+    }
+
+    // New method to control the game flow from buttons
+    public void PlayGame(bool isNewGame)
+    {
+        // First, hide the main menu panel and show the game panel
+        if (gameOpenPanel != null) gameOpenPanel.SetActive(false);
+        if (playGamePanel != null) playGamePanel.SetActive(true);
+
+        if (isNewGame)
+        {
+            StartNewGame();
+        }
+        else
+        {
+            // If LoadGame fails, start a new game instead
+            if (!LoadGame())
+            {
+                StartNewGame();
+            }
+        }
     }
 
     private void Start()
     {
-        StartNewGame();
+        // The Start method is now empty. The game will only start when a button is clicked.
     }
+
     public void SetGridSize(int index)
     {
-        Debug.Log("Dropdown selected index: " + index);
-
         if (index >= 0 && index < gridConfigurations.Count)
         {
             rows = gridConfigurations[index].rows;
@@ -144,54 +175,20 @@ public class GameManager : MonoBehaviour
         streak = 0;
         UpdateUI();
         SaveGame();
-        // Start the initial flip sequence
         StartCoroutine(InitialFlipSequence());
-    }
-
-    private IEnumerator InitialFlipSequence()
-    {
-        SetCardsInteractable(false); // Disable input
-
-        // Reveal all cards immediately at the start
-        foreach (var card in cards)
-        {
-            if (card != null)
-            {
-                card.RevealImmediate();
-            }
-        }
-
-        yield return new WaitForSeconds(initialRevealDuration);
-
-        // Flip all cards back to the back face
-        foreach (var card in cards)
-        {
-            if (card != null)
-            {
-                card.Hide();
-            }
-        }
-
-        yield return new WaitForSeconds(0.5f); // Wait for the flip animation to finish
-
-        SetCardsInteractable(true); // Re-enable input
     }
 
     public void OnCardClicked(Card card)
     {
-        // Don't do anything if the card is already matched
         if (card.IsMatched) return;
-
-        // If the same card is clicked twice, do nothing
         if (flippedUnmatched.Count > 0 && flippedUnmatched[0] == card) return;
+
         PlaySound(sFlip);
         flippedUnmatched.Add(card);
 
         if (flippedUnmatched.Count >= 2)
         {
-            // Disable all card buttons to prevent more flips
             SetCardsInteractable(false);
-
             Card a = flippedUnmatched[0];
             Card b = flippedUnmatched[1];
 
@@ -204,34 +201,33 @@ public class GameManager : MonoBehaviour
                 flippedUnmatched.Clear();
                 SetCardsInteractable(true);
                 UpdateUI();
-                CheckGameOver(); // Check for game over
+                CheckGameOver();
                 PlaySound(sMatch);
                 SaveGame();
             }
             else
             {
-                // Mismatch. Flip them back after a delay.
                 score -= 2;
                 streak = 0;
                 UpdateUI();
                 PlaySound(sMismatch);
-                SaveGame();
                 StartCoroutine(FlipBackAfterDelay(a, b, mismatchDelay));
+                SaveGame();
             }
         }
     }
-    private void UpdateUI()
+
+    private IEnumerator FlipBackAfterDelay(Card a, Card b, float delay)
     {
-        if (scoreText != null)
-        {
-            scoreText.text = score.ToString();
-        }
-        if (streakText != null)
-        {
-            streakText.text = streak.ToString();
-        }
+        yield return new WaitForSeconds(delay);
+
+        if (!a.IsMatched) a.Flip();
+        if (!b.IsMatched) b.Flip();
+
+        flippedUnmatched.Clear();
+        SetCardsInteractable(true);
     }
-    // Checks if the game is over
+
     private void CheckGameOver()
     {
         bool allMatched = true;
@@ -245,10 +241,8 @@ public class GameManager : MonoBehaviour
         }
         if (allMatched)
         {
-            Debug.Log("Game Over! Final Score: " + score);
-            // You can add a UI popup here
             PlaySound(sGameOver);
-            SetCardsInteractable(false); // Disable further input
+            SetCardsInteractable(false);
             if (WinGameObject != null)
             {
                 WinGameObject.SetActive(true);
@@ -256,20 +250,18 @@ public class GameManager : MonoBehaviour
         }
     }
 
-
-    private IEnumerator FlipBackAfterDelay(Card a, Card b, float delay)
+    private void UpdateUI()
     {
-        yield return new WaitForSeconds(delay);
-
-        // Flip them back if they're still not matched
-        if (!a.IsMatched) a.Flip();
-        if (!b.IsMatched) b.Flip();
-
-        flippedUnmatched.Clear();
-        SetCardsInteractable(true); // Re-enable buttons after the flip-back animation
+        if (scoreText != null)
+        {
+            scoreText.text = score.ToString();
+        }
+        if (streakText != null)
+        {
+            streakText.text = streak.ToString();
+        }
     }
 
-    // Helper method to enable/disable all card buttons
     private void SetCardsInteractable(bool interactable)
     {
         foreach (var card in cards)
@@ -279,7 +271,6 @@ public class GameManager : MonoBehaviour
                 Button button = card.GetComponent<Button>();
                 if (button != null)
                 {
-                    // Only change the state if the card is not already matched
                     if (!card.IsMatched)
                     {
                         button.interactable = interactable;
@@ -299,7 +290,7 @@ public class GameManager : MonoBehaviour
             list[j] = temp;
         }
     }
-    // New helper method to play a sound
+
     private void PlaySound(AudioClip clip)
     {
         if (audioSource && clip)
@@ -307,25 +298,31 @@ public class GameManager : MonoBehaviour
             audioSource.PlayOneShot(clip);
         }
     }
-    public void RestartGame()
+
+    private IEnumerator InitialFlipSequence()
     {
-        if (WinGameObject != null)
+        SetCardsInteractable(false);
+        foreach (var card in cards)
         {
-            WinGameObject.SetActive(false);
+            if (card != null)
+            {
+                card.RevealImmediate();
+            }
         }
-        StartNewGame();
+        yield return new WaitForSeconds(initialRevealDuration);
+
+        foreach (var card in cards)
+        {
+            if (card != null)
+            {
+                card.Hide();
+            }
+        }
+        yield return new WaitForSeconds(0.5f);
+        SetCardsInteractable(true);
     }
-    public void QuitGame()
-    {
-#if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;
-#else
-            SaveGame();
-            Application.Quit();
-#endif
-    }
-    
-     #region Save/Load
+
+    #region Save/Load
     public void SaveGame()
     {
         SaveData sd = new SaveData();
@@ -333,11 +330,11 @@ public class GameManager : MonoBehaviour
         sd.cols = cols;
         sd.score = score;
         sd.streak = streak;
-        
+
         int total = rows * cols;
         sd.faces = new int[total];
         sd.matched = new bool[total];
-        
+
         for (int i = 0; i < total; i++)
         {
             if (cards[i] != null)
@@ -371,7 +368,7 @@ public class GameManager : MonoBehaviour
                 if (card != null) Destroy(card.gameObject);
             }
         }
-        
+
         rows = sd.rows;
         cols = sd.cols;
         int total = rows * cols;
@@ -393,12 +390,12 @@ public class GameManager : MonoBehaviour
 
             Card cardScript = cardInstance.GetComponent<Card>();
             int faceIdx = sd.faces[i];
-            
+
             if (faceIdx >= 0 && faceIdx < allFaceSprites.Count)
             {
                 cardScript.SetCard(faceIdx, allFaceSprites[faceIdx], cardBackSprite);
             }
-            
+
             cardScript.IsMatched = sd.matched[i];
             if (cardScript.IsMatched)
             {
@@ -410,9 +407,28 @@ public class GameManager : MonoBehaviour
         score = sd.score;
         streak = sd.streak;
         UpdateUI();
-        
+
         SetCardsInteractable(true);
         return true;
     }
     #endregion
+
+    public void RestartGame()
+    {
+        if (WinGameObject != null)
+        {
+            WinGameObject.SetActive(false);
+        }
+        StartNewGame();
+    }
+    public void QuitGame()
+    {
+#if UNITY_EDITOR
+        SaveGame();
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+        SaveGame();
+        Application.Quit();
+#endif
+    }
 }
