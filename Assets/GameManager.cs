@@ -2,9 +2,12 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 
 public class GameManager : MonoBehaviour
 {
+    public AudioSource audioSource;
+    public AudioClip sFlip, sMatch, sMismatch, sGameOver;
     public static GameManager Instance;
     [System.Serializable]
     public struct GridConfig
@@ -19,6 +22,8 @@ public class GameManager : MonoBehaviour
     [Header("UI")]
     public GameObject cardUIPrefab;
     public Transform gridContainer;
+    public TextMeshProUGUI scoreText;
+    public  TextMeshProUGUI streakText;
 
     [Header("Grid Settings")]
     public List<GridConfig> gridConfigurations;
@@ -32,6 +37,9 @@ public class GameManager : MonoBehaviour
 
     private Card[] cards;
     private List<Card> flippedUnmatched = new List<Card>();
+    private int score = 0;
+    private int streak = 0;
+
 
     private void Awake()
     {
@@ -139,7 +147,7 @@ public class GameManager : MonoBehaviour
 
         // If the same card is clicked twice, do nothing
         if (flippedUnmatched.Count > 0 && flippedUnmatched[0] == card) return;
-
+        PlaySound(sFlip);
         flippedUnmatched.Add(card);
 
         if (flippedUnmatched.Count >= 2)
@@ -152,20 +160,57 @@ public class GameManager : MonoBehaviour
 
             if (a.pairID == b.pairID)
             {
-                // It's a match!
                 a.IsMatched = true;
                 b.IsMatched = true;
+                score += 10;
+                streak++;
                 flippedUnmatched.Clear();
-                SetCardsInteractable(true); // Re-enable buttons immediately for a match
-                Debug.Log("Match found!");
+                SetCardsInteractable(true);
+                UpdateUI();
+                CheckGameOver(); // Check for game over
             }
             else
             {
                 // Mismatch. Flip them back after a delay.
+                score -= 2;
+                streak = 0;
+                UpdateUI();
                 StartCoroutine(FlipBackAfterDelay(a, b, mismatchDelay));
             }
         }
     }
+    private void UpdateUI()
+    {
+        if (scoreText != null)
+        {
+            scoreText.text = "Score: " + score;
+        }
+        if (streakText != null)
+        {
+            streakText.text = "Streak: " + streak;
+        }
+    }
+    // Checks if the game is over
+    private void CheckGameOver()
+    {
+        bool allMatched = true;
+        foreach (var c in cards)
+        {
+            if (c != null && !c.IsMatched)
+            {
+                allMatched = false;
+                break;
+            }
+        }
+        if (allMatched)
+        {
+            Debug.Log("Game Over! Final Score: " + score);
+            // You can add a UI popup here
+            PlaySound(sGameOver);
+            
+        }
+    }
+
 
     private IEnumerator FlipBackAfterDelay(Card a, Card b, float delay)
     {
@@ -207,6 +252,14 @@ public class GameManager : MonoBehaviour
             T temp = list[i];
             list[i] = list[j];
             list[j] = temp;
+        }
+    }
+    // New helper method to play a sound
+    private void PlaySound(AudioClip clip)
+    {
+        if (audioSource && clip)
+        {
+            audioSource.PlayOneShot(clip);
         }
     }
 }
