@@ -315,10 +315,101 @@ public class GameManager : MonoBehaviour
     }
     public void QuitGame()
     {
-        #if UNITY_EDITOR
-            UnityEditor.EditorApplication.isPlaying = false;
-        #else
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
             Application.Quit();
-        #endif
+#endif
     }
+    
+     #region Save/Load
+    public void SaveGame()
+    {
+        SaveData sd = new SaveData();
+        sd.rows = rows;
+        sd.cols = cols;
+        sd.score = score;
+        sd.streak = streak;
+        
+        int total = rows * cols;
+        sd.faces = new int[total];
+        sd.matched = new bool[total];
+        
+        for (int i = 0; i < total; i++)
+        {
+            if (cards[i] != null)
+            {
+                sd.faces[i] = cards[i].pairID;
+                sd.matched[i] = cards[i].IsMatched;
+            }
+        }
+        string json = JsonUtility.ToJson(sd);
+        PlayerPrefs.SetString("CardMatch_Save", json);
+        PlayerPrefs.Save();
+        Debug.Log("Game Saved!");
+    }
+
+    public bool LoadGame()
+    {
+        if (!PlayerPrefs.HasKey("CardMatch_Save"))
+        {
+            Debug.Log("No saved game found.");
+            return false;
+        }
+
+        string json = PlayerPrefs.GetString("CardMatch_Save");
+        SaveData sd = JsonUtility.FromJson<SaveData>(json);
+
+        // Clear existing grid
+        if (cards != null)
+        {
+            foreach (var card in cards)
+            {
+                if (card != null) Destroy(card.gameObject);
+            }
+        }
+        
+        rows = sd.rows;
+        cols = sd.cols;
+        int total = rows * cols;
+        cards = new Card[total];
+
+        float totalGridWidth = cols * (cardSize.x + spacing.x) - spacing.x;
+        float totalGridHeight = rows * (cardSize.y + spacing.y) - spacing.y;
+        Vector2 startPos = new Vector2(-totalGridWidth / 2f, totalGridHeight / 2f);
+
+        for (int i = 0; i < total; i++)
+        {
+            GameObject cardInstance = Instantiate(cardUIPrefab, gridContainer);
+            RectTransform cardRectTransform = cardInstance.GetComponent<RectTransform>();
+
+            float posX = startPos.x + (i % cols) * (cardSize.x + spacing.x);
+            float posY = startPos.y - (i / cols) * (cardSize.y + spacing.y);
+
+            cardRectTransform.anchoredPosition = new Vector2(posX, posY);
+
+            Card cardScript = cardInstance.GetComponent<Card>();
+            int faceIdx = sd.faces[i];
+            
+            if (faceIdx >= 0 && faceIdx < allFaceSprites.Count)
+            {
+                cardScript.SetCard(faceIdx, allFaceSprites[faceIdx], cardBackSprite);
+            }
+            
+            cardScript.IsMatched = sd.matched[i];
+            if (cardScript.IsMatched)
+            {
+                cardScript.RevealImmediate();
+            }
+            cards[i] = cardScript;
+        }
+
+        score = sd.score;
+        streak = sd.streak;
+        UpdateUI();
+        
+        SetCardsInteractable(true);
+        return true;
+    }
+    #endregion
 }
