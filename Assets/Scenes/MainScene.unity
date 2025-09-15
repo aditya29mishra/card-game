@@ -423,7 +423,19 @@ MonoBehaviour:
       m_Image: {fileID: 0}
   m_OnValueChanged:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1482371923}
+        m_TargetAssemblyTypeName: GameManager, Assembly-CSharp
+        m_MethodName: SetGridSize
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   m_AlphaFadeSpeed: 0.15
 --- !u!114 &247427129
 MonoBehaviour:
@@ -1785,10 +1797,20 @@ MonoBehaviour:
   cardUIPrefab: {fileID: 2452533916082028265, guid: cef0a9b77e5d0d242aad5e04f054b76c,
     type: 3}
   gridContainer: {fileID: 1887313765}
+  gridConfigurations:
+  - rows: 2
+    cols: 2
+  - rows: 2
+    cols: 3
+  - rows: 4
+    cols: 4
+  - rows: 5
+    cols: 6
   rows: 5
   cols: 6
   cardSize: {x: 100, y: 150}
   spacing: {x: 10, y: 10}
+  mismatchDelay: 0.6
 --- !u!4 &1482371924
 Transform:
   m_ObjectHideFlags: 0

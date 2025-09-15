@@ -6,7 +6,12 @@ using System.Collections.Generic;
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
-
+    [System.Serializable]
+    public struct GridConfig
+    {
+        public int rows;
+        public int cols;
+    }
     [Header("Assets")]
     public List<Sprite> allFaceSprites;
     public Sprite cardBackSprite;
@@ -16,8 +21,9 @@ public class GameManager : MonoBehaviour
     public Transform gridContainer;
 
     [Header("Grid Settings")]
-    public int rows = 5;
-    public int cols = 6;
+    public List<GridConfig> gridConfigurations;
+    public int rows = 4;
+    public int cols = 4;
     public Vector2 cardSize = new Vector2(100f, 150f);
     public Vector2 spacing = new Vector2(10f, 10f);
 
@@ -42,6 +48,17 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         StartNewGame();
+    }
+    public void SetGridSize(int index)
+    {
+        Debug.Log("Dropdown selected index: " + index);
+
+        if (index >= 0 && index < gridConfigurations.Count)
+        {
+            rows = gridConfigurations[index].rows;
+            cols = gridConfigurations[index].cols;
+            StartNewGame();
+        }
     }
 
     public void StartNewGame()
@@ -153,11 +170,11 @@ public class GameManager : MonoBehaviour
     private IEnumerator FlipBackAfterDelay(Card a, Card b, float delay)
     {
         yield return new WaitForSeconds(delay);
-        
+
         // Flip them back if they're still not matched
         if (!a.IsMatched) a.Flip();
         if (!b.IsMatched) b.Flip();
-        
+
         flippedUnmatched.Clear();
         SetCardsInteractable(true); // Re-enable buttons after the flip-back animation
     }
@@ -181,7 +198,7 @@ public class GameManager : MonoBehaviour
             }
         }
     }
-    
+
     private void ShuffleList<T>(List<T> list)
     {
         for (int i = list.Count - 1; i > 0; i--)
