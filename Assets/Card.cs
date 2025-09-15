@@ -1,17 +1,20 @@
 using UnityEngine;
+using UnityEngine.UI;
+using System.Collections;
 
 public class Card : MonoBehaviour
 {
     public int pairID;
-    public SpriteRenderer cardFront;
-    public SpriteRenderer cardBack;
+    public Image cardFront;
+    public Image cardBack;
     public bool isFlipped = false;
     private bool isAnimating = false;
 
-    public void SetCard(int id, Sprite frontSprite)
+    public void SetCard(int id, Sprite frontSprite, Sprite backSprite)
     {
         pairID = id;
         cardFront.sprite = frontSprite;
+        cardBack.sprite = backSprite;
     }
 
     public void Flip()
@@ -20,21 +23,22 @@ public class Card : MonoBehaviour
         StartCoroutine(FlipAnimation());
     }
 
-    private System.Collections.IEnumerator FlipAnimation()
+    private IEnumerator FlipAnimation()
     {
         isAnimating = true;
         float time = 0f;
         float duration = 0.3f;
 
-        // Shrink
+        // Shrink (scale along the X-axis)
         while (time < duration / 2)
         {
-            transform.localScale = new Vector3(Mathf.Lerp(1f, 0f, time / (duration / 2)), 1f, 1f);
+            float scaleX = Mathf.Lerp(1f, 0f, time / (duration / 2));
+            transform.localScale = new Vector3(scaleX, 1f, 1f);
             time += Time.deltaTime;
             yield return null;
         }
 
-        // Toggle sprite
+        // Toggle visibility
         isFlipped = !isFlipped;
         cardFront.gameObject.SetActive(isFlipped);
         cardBack.gameObject.SetActive(!isFlipped);
@@ -43,7 +47,8 @@ public class Card : MonoBehaviour
         time = 0f;
         while (time < duration / 2)
         {
-            transform.localScale = new Vector3(Mathf.Lerp(0f, 1f, time / (duration / 2)), 1f, 1f);
+            float scaleX = Mathf.Lerp(0f, 1f, time / (duration / 2));
+            transform.localScale = new Vector3(scaleX, 1f, 1f);
             time += Time.deltaTime;
             yield return null;
         }

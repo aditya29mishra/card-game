@@ -6,7 +6,7 @@ public class GameManager : MonoBehaviour
 {
     public List<Sprite> allFaceSprites;
     public Sprite cardBackSprite;
-    
+
     public GameObject cardUIPrefab;
     public Transform gridContainer;
 
@@ -18,6 +18,7 @@ public class GameManager : MonoBehaviour
 
     // Define the spacing between cards
     public Vector2 spacing = new Vector2(10f, 10f);
+        private Card[] cards;
 
     private void Start()
     {
@@ -26,33 +27,88 @@ public class GameManager : MonoBehaviour
 
     public void StartNewGame()
     {
-        Debug.Log("Starting a new UI game with a manual grid.");
+        // Clear any existing cards
+        if (cards != null)
+        {
+            foreach (var card in cards)
+            {
+                if (card != null) Destroy(card.gameObject);
+            }
+        }
 
-        // Calculate the total grid size
+        int totalCards = rows * cols;
+        if (totalCards % 2 != 0)
+        {
+            Debug.LogError("Grid must have an even number of cards to form pairs.");
+            return;
+        }
+
+        int totalPairs = totalCards / 2;
+        if (totalPairs > allFaceSprites.Count)
+        {
+            Debug.LogError("Not enough unique card sprites for the chosen grid size!");
+            return;
+        }
+
+        // 1. Randomly choose unique cards for the game
+        List<int> choiceIndices = new List<int>();
+        List<int> availableIndices = new List<int>();
+        for (int i = 0; i < allFaceSprites.Count; i++)
+        {
+            availableIndices.Add(i);
+        }
+
+        for (int i = 0; i < totalPairs; i++)
+        {
+            int randomIndex = Random.Range(0, availableIndices.Count);
+            int chosenIndex = availableIndices[randomIndex];
+            choiceIndices.Add(chosenIndex);
+            availableIndices.RemoveAt(randomIndex);
+        }
+
+        // 2. Duplicate the chosen cards to create pairs
+        List<int> faces = new List<int>();
+        for (int i = 0; i < totalPairs; i++)
+        {
+            faces.Add(choiceIndices[i]);
+            faces.Add(choiceIndices[i]);
+        }
+
+        // 3. Shuffle the entire list of pairs
+        ShuffleList(faces);
+
+        cards = new Card[totalCards];
+
+        // 4. Instantiate and assign cards
         float totalGridWidth = cols * (cardSize.x + spacing.x) - spacing.x;
         float totalGridHeight = rows * (cardSize.y + spacing.y) - spacing.y;
-        
-        // Calculate the starting position (top-left corner)
         Vector2 startPos = new Vector2(-totalGridWidth / 2f, totalGridHeight / 2f);
 
-        // Loop to create and position each card
-        for (int y = 0; y < rows; y++)
+        for (int i = 0; i < totalCards; i++)
         {
-            for (int x = 0; x < cols; x++)
-            {
-                // Instantiate the card as a child of the grid container
-                GameObject cardInstance = Instantiate(cardUIPrefab, gridContainer);
+            GameObject cardInstance = Instantiate(cardUIPrefab, gridContainer);
+            RectTransform cardRectTransform = cardInstance.GetComponent<RectTransform>();
 
-                // Get the RectTransform component of the new card
-                RectTransform cardRectTransform = cardInstance.GetComponent<RectTransform>();
+            float posX = startPos.x + (i % cols) * (cardSize.x + spacing.x);
+            float posY = startPos.y - (i / cols) * (cardSize.y + spacing.y);
 
-                // Calculate the card's position
-                float posX = startPos.x + x * (cardSize.x + spacing.x);
-                float posY = startPos.y - y * (cardSize.y + spacing.y);
+            cardRectTransform.anchoredPosition = new Vector2(posX, posY);
 
-                // Set the card's position
-                cardRectTransform.anchoredPosition = new Vector2(posX, posY);
-            }
+            Card cardScript = cardInstance.GetComponent<Card>();
+            int faceID = faces[i];
+            cardScript.SetCard(faceID, allFaceSprites[faceID], cardBackSprite);
+            cards[i] = cardScript;
+        }
+    }
+    // Simple Fisher-Yates shuffle algorithm
+    private void ShuffleList<T>(List<T> list)
+    {
+        for (int i = list.Count - 1; i > 0; i--)
+        {
+            int j = Random.Range(0, i + 1);
+            T temp = list[i];
+            list[i] = list[j];
+            list[j] = temp;
         }
     }
 }
