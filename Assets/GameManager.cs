@@ -168,6 +168,7 @@ public class GameManager : MonoBehaviour
                 SetCardsInteractable(true);
                 UpdateUI();
                 CheckGameOver(); // Check for game over
+                PlaySound(sMatch);
             }
             else
             {
@@ -175,6 +176,7 @@ public class GameManager : MonoBehaviour
                 score -= 2;
                 streak = 0;
                 UpdateUI();
+                PlaySound(sMismatch);
                 StartCoroutine(FlipBackAfterDelay(a, b, mismatchDelay));
             }
         }
@@ -183,11 +185,11 @@ public class GameManager : MonoBehaviour
     {
         if (scoreText != null)
         {
-            scoreText.text = "Score: " + score;
+            scoreText.text = score.ToString();
         }
         if (streakText != null)
         {
-            streakText.text = "Streak: " + streak;
+            streakText.text = streak.ToString();
         }
     }
     // Checks if the game is over
@@ -207,7 +209,7 @@ public class GameManager : MonoBehaviour
             Debug.Log("Game Over! Final Score: " + score);
             // You can add a UI popup here
             PlaySound(sGameOver);
-            
+
         }
     }
 
