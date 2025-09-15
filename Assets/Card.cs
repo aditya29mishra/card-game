@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using System.Collections.Generic;
 
 public class Card : MonoBehaviour
 {
@@ -9,7 +10,8 @@ public class Card : MonoBehaviour
     public Image cardBack;
     public bool isFlipped = false;
     private bool isAnimating = false;
-
+    
+    public bool IsMatched = false;
     // Use Awake to set up the button listener
     private void Awake()
     {
