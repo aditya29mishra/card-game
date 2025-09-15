@@ -143,7 +143,7 @@ public class GameManager : MonoBehaviour
         score = 0;
         streak = 0;
         UpdateUI();
-
+        SaveGame();
         // Start the initial flip sequence
         StartCoroutine(InitialFlipSequence());
     }
@@ -206,6 +206,7 @@ public class GameManager : MonoBehaviour
                 UpdateUI();
                 CheckGameOver(); // Check for game over
                 PlaySound(sMatch);
+                SaveGame();
             }
             else
             {
@@ -214,6 +215,7 @@ public class GameManager : MonoBehaviour
                 streak = 0;
                 UpdateUI();
                 PlaySound(sMismatch);
+                SaveGame();
                 StartCoroutine(FlipBackAfterDelay(a, b, mismatchDelay));
             }
         }
@@ -318,6 +320,7 @@ public class GameManager : MonoBehaviour
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
 #else
+            SaveGame()
             Application.Quit();
 #endif
     }
