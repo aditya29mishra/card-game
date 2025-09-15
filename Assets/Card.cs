@@ -10,7 +10,7 @@ public class Card : MonoBehaviour
     public Image cardBack;
     public bool isFlipped = false;
     private bool isAnimating = false;
-    
+
     public bool IsMatched = false;
     // Use Awake to set up the button listener
     private void Awake()
@@ -33,8 +33,10 @@ public class Card : MonoBehaviour
         isFlipped = false;
     }
 
-    public void OnCardClick() {
-        if (!isFlipped && !isAnimating) {
+    public void OnCardClick()
+    {
+        if (!isFlipped && !isAnimating)
+        {
             Flip();
             // Tell the GameManager this card was clicked
             GameManager.Instance.OnCardClicked(this);
@@ -79,5 +81,18 @@ public class Card : MonoBehaviour
 
         transform.localScale = Vector3.one;
         isAnimating = false;
+    }
+    public void RevealImmediate()
+    {
+        isFlipped = true;
+        cardFront.gameObject.SetActive(true);
+        cardBack.gameObject.SetActive(false);
+    }
+
+    public void Hide()
+    {
+        isFlipped = false;
+        cardFront.gameObject.SetActive(false);
+        cardBack.gameObject.SetActive(true);
     }
 }

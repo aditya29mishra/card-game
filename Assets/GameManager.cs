@@ -23,7 +23,7 @@ public class GameManager : MonoBehaviour
     public GameObject cardUIPrefab;
     public Transform gridContainer;
     public TextMeshProUGUI scoreText;
-    public  TextMeshProUGUI streakText;
+    public TextMeshProUGUI streakText;
 
     [Header("Grid Settings")]
     public List<GridConfig> gridConfigurations;
@@ -39,7 +39,8 @@ public class GameManager : MonoBehaviour
     private List<Card> flippedUnmatched = new List<Card>();
     private int score = 0;
     private int streak = 0;
-
+    public float initialRevealDuration = 2.0f;
+    public GameObject WinGameObject;
 
     private void Awake()
     {
@@ -138,6 +139,42 @@ public class GameManager : MonoBehaviour
             cardScript.SetCard(faceID, allFaceSprites[faceID], cardBackSprite);
             cards[i] = cardScript;
         }
+
+        score = 0;
+        streak = 0;
+        UpdateUI();
+
+        // Start the initial flip sequence
+        StartCoroutine(InitialFlipSequence());
+    }
+
+    private IEnumerator InitialFlipSequence()
+    {
+        SetCardsInteractable(false); // Disable input
+
+        // Reveal all cards immediately at the start
+        foreach (var card in cards)
+        {
+            if (card != null)
+            {
+                card.RevealImmediate();
+            }
+        }
+
+        yield return new WaitForSeconds(initialRevealDuration);
+
+        // Flip all cards back to the back face
+        foreach (var card in cards)
+        {
+            if (card != null)
+            {
+                card.Hide();
+            }
+        }
+
+        yield return new WaitForSeconds(0.5f); // Wait for the flip animation to finish
+
+        SetCardsInteractable(true); // Re-enable input
     }
 
     public void OnCardClicked(Card card)
@@ -209,7 +246,11 @@ public class GameManager : MonoBehaviour
             Debug.Log("Game Over! Final Score: " + score);
             // You can add a UI popup here
             PlaySound(sGameOver);
-
+            SetCardsInteractable(false); // Disable further input
+            if (WinGameObject != null)
+            {
+                WinGameObject.SetActive(true);
+            }
         }
     }
 
@@ -263,5 +304,21 @@ public class GameManager : MonoBehaviour
         {
             audioSource.PlayOneShot(clip);
         }
+    }
+    public void RestartGame()
+    {
+        if (WinGameObject != null)
+        {
+            WinGameObject.SetActive(false);
+        }
+        StartNewGame();
+    }
+    public void QuitGame()
+    {
+        #if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+        #else
+            Application.Quit();
+        #endif
     }
 }
