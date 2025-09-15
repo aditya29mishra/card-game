@@ -1011,7 +1011,7 @@ MonoBehaviour:
         m_CallState: 2
       - m_Target: {fileID: 1482371923}
         m_TargetAssemblyTypeName: GameManager, Assembly-CSharp
-        m_MethodName: StartNewGame
+        m_MethodName: RestartGame
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -2059,7 +2059,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &877391057
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2972,7 +2972,7 @@ MonoBehaviour:
   spacing: {x: 10, y: 10}
   mismatchDelay: 0.6
   initialRevealDuration: 2
-  WinGameObject: {fileID: 0}
+  WinGameObject: {fileID: 2066492333}
 --- !u!4 &1482371924
 Transform:
   m_ObjectHideFlags: 0
